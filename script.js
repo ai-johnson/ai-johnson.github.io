@@ -40,30 +40,33 @@ function addMessage(sender, text) {
   chatHistory.push({ sender, text });
 }
 
-// Simulate API call to Gemini
 async function getGeminiResponse(userMessage) {
-  const apiKey = "GOOGLE_API_KEY"; // Replace with your actual API key
-  const response = await fetch("https://api-generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
+    try {
+        const response = await fetch("http://127.0.0.1:5000/generate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
       prompt: {
         text: `You are a Japanese girl using modern slang. Respond to the user as if you are texting in a friendly or romantic tone.`,
       },
       userInput: userMessage,
     }),
-  });
 
-  const data = await response.json();
-  const aiText = data.candidates[0].output;
+        });
 
-  // Example response logic
-  const loveChange = aiText.includes("いい感じ") ? 10 : -10;
+        const data = await response.json();
+        if (data.error) {
+            console.error("Error from Python backend:", data.error);
+            return { message: "Error: Could not get a response", loveChange: 0 };
+        }
 
-  return { message: aiText, loveChange };
+        return { message: data.response, loveChange: data.response.includes("いい感じ") ? 10 : -10 };
+    } catch (error) {
+        console.error("Error in fetch:", error);
+        return { message: "Error: Could not connect to backend", loveChange: 0 };
+    }
 }
 
 // Spill the Tea button
